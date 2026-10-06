@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Package, Settings, LogOut, Menu } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
 export function Layout() {
   const { signOut } = useAuth()
   const location = useLocation()
+  const [isOpen, setIsOpen] = useState(false)
 
   const navItems = [
     { name: 'Products', path: '/products', icon: Package },
@@ -57,9 +60,48 @@ export function Layout() {
               Sign Out
             </Button>
             
-            <Button variant="ghost" size="icon" className="md:hidden" aria-label="Toggle Menu">
-              <Menu className="h-5 w-5" aria-hidden="true" />
-            </Button>
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Toggle Menu">
+                  <Menu className="h-5 w-5" aria-hidden="true" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right">
+                <SheetHeader>
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+                <nav aria-label="Mobile Navigation" className="flex flex-col gap-4 mt-6">
+                  {navItems.map((item) => {
+                    const isActive = location.pathname.startsWith(item.path)
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setIsOpen(false)}
+                        className={`flex items-center gap-2 transition-colors hover:text-foreground/80 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring px-2 py-2 ${
+                          isActive ? 'text-foreground font-semibold' : 'text-foreground/60'
+                        }`}
+                        aria-current={isActive ? 'page' : undefined}
+                      >
+                        <item.icon className="h-5 w-5" aria-hidden="true" />
+                        <span className="text-base">{item.name}</span>
+                      </Link>
+                    )
+                  })}
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setIsOpen(false)
+                      signOut()
+                    }}
+                    className="flex justify-start gap-2 text-muted-foreground hover:text-foreground px-2 py-2 mt-2 w-full"
+                  >
+                    <LogOut className="h-5 w-5" aria-hidden="true" />
+                    <span className="text-base">Sign Out</span>
+                  </Button>
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
