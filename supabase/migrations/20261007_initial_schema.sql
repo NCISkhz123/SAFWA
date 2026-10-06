@@ -40,16 +40,13 @@ DECLARE
     cat_code TEXT;
     next_num INT;
 BEGIN
-    -- Get Category Code
-    SELECT code INTO cat_code FROM categories WHERE id = NEW.category_id;
+    -- Lock category to avoid race condition and get Category Code
+    SELECT code INTO cat_code FROM categories WHERE id = NEW.category_id FOR UPDATE;
     
-    -- Lock and count existing products in category to avoid race condition
-    PERFORM id FROM categories WHERE id = NEW.category_id FOR UPDATE;
-    
-    SELECT COUNT(*) + 1 INTO next_num FROM products WHERE category_id = NEW.category_id;
+    SELECT COALESCE(MAX(NULLIF(regexp_replace(product_code, '^' || cat_code, ''), '')::INTEGER), 0) + 1 INTO next_num FROM products WHERE category_id = NEW.category_id;
     
     -- Format like KM001
-    NEW.product_code := cat_code || lpad(next_num::text, 3, '0');
+    NEW.product_code := cat_code || lpad(next_num::text, GREATEST(3, length(next_num::text)), '0');
     
     RETURN NEW;
 END;
@@ -61,8 +58,30 @@ FOR EACH ROW
 EXECUTE FUNCTION generate_product_code();
 
 -- Create Storage Bucket
-INSERT INTO storage.buckets (id, name, public) VALUES ('product_images', 'product_images', true);
+INSERT INTO storage.buckets (id, name, public) VALUES ('product_images', 'product_images', true) ON CONFLICT (id) DO NOTHING;
 CREATE POLICY "Authenticated users can upload images" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'product_images');
 CREATE POLICY "Authenticated users can update images" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'product_images');
 CREATE POLICY "Authenticated users can delete images" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'product_images');
 CREATE POLICY "Public can view images" ON storage.objects FOR SELECT TO public USING (bucket_id = 'product_images');
+
+-- Foreign Key Indexes
+CREATE INDEX idx_products_category_id ON products(category_id);
+
+-- updated_at Trigger
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_categories_updated_at
+BEFORE UPDATE ON categories
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER set_products_updated_at
+BEFORE UPDATE ON products
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
