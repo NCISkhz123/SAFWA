@@ -7,14 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
 export function Layout() {
-  const { signOut, user } = useAuth()
+  const { signOut, user, role } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const [isOpen, setIsOpen] = useState(false)
 
   const navItems = [
     { name: 'Produk', path: '/products', icon: Package },
-    { name: 'Pengaturan', path: '/settings', icon: Settings },
+    ...(role === 'admin' ? [{ name: 'Pengaturan', path: '/settings', icon: Settings }] : []),
   ]
 
   return (

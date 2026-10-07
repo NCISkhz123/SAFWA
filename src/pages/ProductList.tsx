@@ -38,8 +38,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 export function ProductList() {
+  const { role } = useAuth();
   const [products, setProducts] = useState<ProductWithCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -141,20 +143,20 @@ export function ProductList() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
       {/* Top Bento Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4">
-
-
-        <Link 
-          to="/products/new" 
-          className={cn(
-            buttonVariants({ variant: 'default' }), 
-            "h-11 px-5 rounded-xl font-semibold shadow-md active:scale-[0.97] transition-all bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 flex items-center gap-2"
-          )}
-        >
-          <Plus className="h-4 w-4" aria-hidden="true" />
-          <span>Tambah Produk</span>
-        </Link>
-      </div>
+      {role === 'admin' && (
+        <div className="flex flex-col md:flex-row md:items-center justify-end gap-4">
+          <Link 
+            to="/products/new" 
+            className={cn(
+              buttonVariants({ variant: 'default' }), 
+              "h-11 px-5 rounded-xl font-semibold shadow-md active:scale-[0.97] transition-all bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 flex items-center gap-2"
+            )}
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            <span>Tambah Produk</span>
+          </Link>
+        </div>
+      )}
 
 
 
@@ -365,50 +367,54 @@ export function ProductList() {
                     {product.market_price ? `Info Psr: ${formatIDR(product.market_price)}` : 'Info Psr: -'}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Link
-                      to={`/products/${product.id}/edit`}
-                      className={cn(
-                        buttonVariants({ variant: 'ghost', size: 'icon' }),
-                        "h-8 w-8 rounded-xl text-zinc-600 dark:text-zinc-300 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 active:scale-[0.95]"
-                      )}
-                      aria-label={`Ubah produk ${product.name}`}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Link>
+                    {role === 'admin' && (
+                      <>
+                        <Link
+                          to={`/products/${product.id}/edit`}
+                          className={cn(
+                            buttonVariants({ variant: 'ghost', size: 'icon' }),
+                            "h-8 w-8 rounded-xl text-zinc-600 dark:text-zinc-300 hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 active:scale-[0.95]"
+                          )}
+                          aria-label={`Ubah produk ${product.name}`}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Link>
 
-                    <AlertDialog>
-                      <AlertDialogTrigger
-                        render={
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 rounded-xl text-zinc-600 dark:text-zinc-400 hover:text-destructive hover:bg-destructive/10 active:scale-[0.95]" 
-                            aria-label={`Hapus produk ${product.name}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        }
-                      />
-                      <AlertDialogContent className="glass-panel border-black/10 dark:border-white/15 rounded-3xl p-6 sm:p-8">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle className="text-xl font-bold">Hapus Produk Ini?</AlertDialogTitle>
-                          <AlertDialogDescription className="text-sm text-muted-foreground mt-2">
-                            Apakah Anda yakin ingin menghapus produk <strong>{product.name}</strong> ({product.product_code})? Seluruh data dan gambar terkait akan dihapus permanen.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter className="mt-6 gap-2">
-                          <AlertDialogCancel className="rounded-xl active:scale-[0.97]">
-                            Batalkan
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(product.id, product.image_path)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl active:scale-[0.97]"
-                          >
-                            Hapus Produk
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                        <AlertDialog>
+                          <AlertDialogTrigger
+                            render={
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-xl text-zinc-600 dark:text-zinc-400 hover:text-destructive hover:bg-destructive/10 active:scale-[0.95]" 
+                                aria-label={`Hapus produk ${product.name}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
+                          <AlertDialogContent className="glass-panel border-black/10 dark:border-white/15 rounded-3xl p-6 sm:p-8">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="text-xl font-bold">Hapus Produk Ini?</AlertDialogTitle>
+                              <AlertDialogDescription className="text-sm text-muted-foreground mt-2">
+                                Apakah Anda yakin ingin menghapus produk <strong>{product.name}</strong> ({product.product_code})? Seluruh data dan gambar terkait akan dihapus permanen.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter className="mt-6 gap-2">
+                              <AlertDialogCancel className="rounded-xl active:scale-[0.97]">
+                                Batalkan
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(product.id, product.image_path)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl active:scale-[0.97]"
+                              >
+                                Hapus Produk
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -497,44 +503,50 @@ export function ProductList() {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1.5">
-                        <Link 
-                          to={`/products/${product.id}/edit`} 
-                          aria-label={`Ubah ${product.name}`}
-                          className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), "h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground")}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Link>
-                        <AlertDialog>
-                          <AlertDialogTrigger
-                            render={
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10" 
-                                aria-label={`Hapus ${product.name}`}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            }
-                          />
-                          <AlertDialogContent className="glass-panel border-black/10 dark:border-white/15 rounded-3xl p-6 sm:p-8">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle className="text-xl font-bold">Hapus Produk</AlertDialogTitle>
-                              <AlertDialogDescription className="text-sm text-muted-foreground mt-2">
-                                Apakah Anda yakin ingin menghapus produk <strong>{product.name}</strong>? Data yang dihapus tidak dapat dikembalikan.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter className="mt-6 gap-2">
-                              <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleDelete(product.id, product.image_path)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
-                              >
-                                Hapus
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        {role === 'admin' ? (
+                          <>
+                            <Link 
+                              to={`/products/${product.id}/edit`} 
+                              aria-label={`Ubah ${product.name}`}
+                              className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), "h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground")}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Link>
+                            <AlertDialog>
+                              <AlertDialogTrigger
+                                render={
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10" 
+                                    aria-label={`Hapus ${product.name}`}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                }
+                              />
+                              <AlertDialogContent className="glass-panel border-black/10 dark:border-white/15 rounded-3xl p-6 sm:p-8">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-xl font-bold">Hapus Produk</AlertDialogTitle>
+                                  <AlertDialogDescription className="text-sm text-muted-foreground mt-2">
+                                    Apakah Anda yakin ingin menghapus produk <strong>{product.name}</strong>? Data yang dihapus tidak dapat dikembalikan.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="mt-6 gap-2">
+                                  <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleDelete(product.id, product.image_path)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
+                                  >
+                                    Hapus
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
