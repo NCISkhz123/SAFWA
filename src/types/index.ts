@@ -19,3 +19,7 @@ export interface Product {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface ProductWithCategory extends Product {
+  categories?: Category;
+}
