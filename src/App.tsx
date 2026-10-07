@@ -3,6 +3,7 @@ import { Login } from '@/pages/Login'
 import { Layout } from '@/components/shared/Layout'
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
 import { Settings } from '@/pages/Settings'
+import { ProductList } from '@/pages/ProductList'
 
 function App() {
   return (
@@ -13,7 +14,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route path="/" element={<Navigate to="/products" replace />} />
-            <Route path="/products" element={<div className="animate-in fade-in slide-in-from-bottom-4">Products Placeholder</div>} />
+            <Route path="/products" element={<ProductList />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>

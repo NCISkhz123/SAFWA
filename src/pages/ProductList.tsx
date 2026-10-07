@@ -1,0 +1,242 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Plus, Edit2, Trash2, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { fetchProducts, deleteProduct } from '@/lib/api';
+import { type ProductWithCategory } from '@/types';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+
+export function ProductList() {
+  const [products, setProducts] = useState<ProductWithCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchProducts();
+      setProducts(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load products.');
+      toast.error('Gagal memuat produk');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string, imagePath: string | null) => {
+    try {
+      await deleteProduct(id, imagePath);
+      toast.success('Produk berhasil dihapus');
+      setProducts(products.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error(err);
+      toast.error('Gagal menghapus produk');
+    }
+  };
+
+  const formatIDR = (value: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const getImageUrl = (path: string | null) => {
+    if (!path) return null;
+    return supabase.storage.from('product_images').getPublicUrl(path).data.publicUrl;
+  };
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center">
+        <p className="text-destructive mb-4">{error}</p>
+        <Button onClick={loadProducts} variant="outline">
+          Coba Lagi
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Produk</h1>
+          <p className="text-muted-foreground mt-1">Kelola daftar produk, harga, dan margin.</p>
+        </div>
+        <Link 
+          to="/products/new" 
+          className={cn(buttonVariants({ variant: 'default' }), "shrink-0 scale-100 active:scale-95 transition-transform")}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Tambah Produk
+        </Link>
+      </div>
+
+      <Card className="border-border/50 shadow-sm overflow-hidden">
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center p-24 text-muted-foreground">
+              <Loader2 className="h-8 w-8 animate-spin mb-4" />
+              <p>Memuat produk...</p>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-24 text-center">
+              <div className="bg-muted h-20 w-20 rounded-full flex items-center justify-center mb-6">
+                <ImageIcon className="h-10 w-10 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-medium text-foreground mb-2">Belum ada produk</h3>
+              <p className="text-muted-foreground mb-6 max-w-sm">
+                Tambahkan produk pertama Anda untuk mulai mengelola inventory.
+              </p>
+              <Link 
+                to="/products/new" 
+                className={cn(buttonVariants({ variant: 'default' }), "scale-100 active:scale-95 transition-transform")}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Tambah Produk
+              </Link>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="w-[80px]">Gambar</TableHead>
+                  <TableHead>Info Produk</TableHead>
+                  <TableHead className="text-right">Harga Supplier</TableHead>
+                  <TableHead className="text-right">Harga Jual</TableHead>
+                  <TableHead className="text-right">Margin</TableHead>
+                  <TableHead className="text-center">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products.map((product) => {
+                  const imageUrl = getImageUrl(product.image_path);
+                  return (
+                    <TableRow key={product.id} className="group">
+                      <TableCell>
+                        <div className="h-12 w-12 rounded-md overflow-hidden bg-muted flex items-center justify-center relative border border-border/50">
+                          {imageUrl ? (
+                            <>
+                              <div className="absolute inset-0 bg-black/5 pointer-events-none z-10" />
+                              <img
+                                src={imageUrl}
+                                alt={product.name}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            </>
+                          ) : (
+                            <ImageIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-foreground line-clamp-1">{product.name}</span>
+                          <span className="text-xs text-muted-foreground font-mono mt-0.5">{product.product_code}</span>
+                          {product.categories && (
+                            <div className="mt-1.5">
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal">
+                                {product.categories.name}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatIDR(product.supplier_price)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        <div className="flex flex-col items-end">
+                          <span className="font-medium text-foreground">{formatIDR(product.market_price)}</span>
+                          {product.promotion_cost > 0 && (
+                            <span className="text-xs text-muted-foreground mt-0.5">
+                              + Promo: {formatIDR(product.promotion_cost)}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        <Badge 
+                          variant={product.margin_percent > 20 ? 'default' : 'secondary'} 
+                          className="ml-auto flex w-fit"
+                        >
+                          {product.margin_percent}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Link 
+                            to={`/products/${product.id}/edit`} 
+                            aria-label={`Edit ${product.name}`}
+                            className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), "h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-1 transition-colors")}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Link>
+                          <AlertDialog>
+                            <AlertDialogTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus-visible:ring-1 transition-colors" aria-label={`Hapus ${product.name}`}><Trash2 className="h-4 w-4" /></Button>} />
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Hapus Produk</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Apakah Anda yakin ingin menghapus produk <strong>{product.name}</strong>? Data yang dihapus tidak dapat dikembalikan.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel className="scale-100 active:scale-95 transition-transform">
+                                  Batal
+                                </AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleDelete(product.id, product.image_path)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 scale-100 active:scale-95 transition-transform"
+                                >
+                                  Hapus
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
