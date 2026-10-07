@@ -61,11 +61,13 @@ export function Layout() {
             </Button>
             
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Toggle Menu">
-                  <Menu className="h-5 w-5" aria-hidden="true" />
-                </Button>
-              </SheetTrigger>
+              <SheetTrigger
+                render={
+                  <Button variant="ghost" size="icon" className="md:hidden" aria-label="Toggle Menu">
+                    <Menu className="h-5 w-5" aria-hidden="true" />
+                  </Button>
+                }
+              />
               <SheetContent side="right">
                 <SheetHeader>
                   <SheetTitle>Menu</SheetTitle>
