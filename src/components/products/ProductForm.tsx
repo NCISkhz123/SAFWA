@@ -1,0 +1,236 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
+import { uploadImage } from '@/lib/api';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Category } from '@/types';
+import { Loader2, ImagePlus } from 'lucide-react';
+
+export function ProductForm() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    category_id: '',
+    supplier_price: '',
+    market_price: '',
+  });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase.from('categories').select('*').order('name');
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+      toast.error('Gagal memuat kategori produk');
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCategoryChange = (value: string | null) => {
+    if (value) {
+      setFormData((prev) => ({ ...prev, category_id: value }));
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (!formData.name || !formData.category_id || !formData.supplier_price || !formData.market_price) {
+        throw new Error('Semua field wajib diisi');
+      }
+
+      const supplierPrice = parseFloat(formData.supplier_price);
+      const marketPrice = parseFloat(formData.market_price);
+
+      if (supplierPrice < 0 || marketPrice < 0) {
+        throw new Error('Harga tidak boleh negatif');
+      }
+
+      let image_path = null;
+      if (imageFile) {
+        image_path = await uploadImage(imageFile);
+        if (!image_path) {
+          throw new Error('Gagal mengupload gambar');
+        }
+      }
+
+      const { error } = await supabase.from('products').insert([
+        {
+          name: formData.name,
+          category_id: formData.category_id,
+          supplier_price: supplierPrice,
+          market_price: marketPrice,
+          margin_percent: 0,
+          promotion_cost: 0,
+          image_path,
+        },
+      ]);
+
+      if (error) throw error;
+
+      toast.success('Produk berhasil ditambahkan');
+      navigate('/products');
+    } catch (error: any) {
+      toast.error(error.message || 'Gagal menambahkan produk');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="w-full max-w-2xl mx-auto shadow-sm">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-semibold">Tambah Produk Baru</CardTitle>
+        <CardDescription>
+          Masukkan detail produk untuk menambahkannya ke inventaris.
+        </CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent className="space-y-6">
+          {/* Image Upload */}
+          <div className="space-y-3">
+            <Label>Foto Produk</Label>
+            <div className="flex items-center gap-4">
+              <div 
+                className="flex items-center justify-center w-24 h-24 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 overflow-hidden relative"
+              >
+                {imagePreview ? (
+                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <ImagePlus className="w-8 h-8 text-muted-foreground/50" />
+                )}
+              </div>
+              <div className="flex-1 space-y-1">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="w-full max-w-xs cursor-pointer"
+                  disabled={loading}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Format yang didukung: JPG, PNG. Maksimal 5MB.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nama Produk</Label>
+              <Input
+                id="name"
+                name="name"
+                placeholder="Cth: Kemeja Flanel"
+                value={formData.name}
+                onChange={handleChange}
+                disabled={loading}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category_id">Kategori</Label>
+              <Select 
+                value={formData.category_id} 
+                onValueChange={handleCategoryChange} 
+                disabled={loading || categories.length === 0}
+                required
+              >
+                <SelectTrigger id="category_id">
+                  <SelectValue placeholder="Pilih Kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="supplier_price">Harga Modal (Rp)</Label>
+              <Input
+                id="supplier_price"
+                name="supplier_price"
+                type="number"
+                min="0"
+                placeholder="0"
+                value={formData.supplier_price}
+                onChange={handleChange}
+                disabled={loading}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="market_price">Harga Jual (Rp)</Label>
+              <Input
+                id="market_price"
+                name="market_price"
+                type="number"
+                min="0"
+                placeholder="0"
+                value={formData.market_price}
+                onChange={handleChange}
+                disabled={loading}
+                required
+              />
+            </div>
+          </div>
+        </CardContent>
+        
+        <CardFooter className="flex justify-end gap-3 pt-4 border-t">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => navigate('/products')}
+            disabled={loading}
+          >
+            Batal
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Simpan Produk
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
