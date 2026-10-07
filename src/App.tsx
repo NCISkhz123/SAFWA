@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
 import { Settings } from '@/pages/Settings'
 import { ProductList } from '@/pages/ProductList'
 import { ProductFormPage } from '@/pages/ProductFormPage'
+import EditProductPage from '@/pages/EditProductPage'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/" element={<Navigate to="/products" replace />} />
             <Route path="/products" element={<ProductList />} />
             <Route path="/products/new" element={<ProductFormPage />} />
+            <Route path="/products/:id/edit" element={<EditProductPage />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>
