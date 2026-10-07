@@ -48,7 +48,7 @@ export default function EditProductPage() {
 
   if (loading) {
     return (
-      <div className="glass-panel rounded-3xl p-16 flex flex-col items-center justify-center min-h-[400px] max-w-2xl mx-auto my-12 border border-white/60 dark:border-white/10">
+      <div className="glass-panel rounded-3xl p-16 flex flex-col items-center justify-center min-h-[400px] max-w-2xl mx-auto my-12 border border-black/10 dark:border-white/15">
         <Loader2 className="h-8 w-8 animate-spin mb-3 text-primary" />
         <p className="text-sm font-medium text-muted-foreground">Memuat detail produk...</p>
       </div>

@@ -169,7 +169,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
       {/* Bento Grid: 2 Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Bento Tile 1: Photo & Media Showcase (5 cols) */}
-        <div className="lg:col-span-5 glass-panel rounded-3xl p-6 sm:p-7 border border-white/60 dark:border-white/10 shadow-md relative overflow-hidden bento-glow-purple flex flex-col justify-between">
+        <div className="lg:col-span-5 glass-panel rounded-3xl p-6 sm:p-7 border border-black/10 dark:border-white/15 shadow-md relative overflow-hidden bento-glow-purple flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -242,7 +242,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
         {/* Bento Tile 2 & 3: Info & Financials (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Sub-Tile: Identitas Produk */}
-          <div className="glass-panel rounded-3xl p-6 sm:p-7 border border-white/60 dark:border-white/10 shadow-md space-y-4">
+          <div className="glass-panel rounded-3xl p-6 sm:p-7 border border-black/10 dark:border-white/15 shadow-md space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-black/[0.04] dark:border-white/[0.06]">
               <div className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
                 <Tag className="h-4 w-4" />
@@ -310,7 +310,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
           </div>
 
           {/* Sub-Tile: Finansial & Kalkulator Margin */}
-          <div className="glass-panel rounded-3xl p-6 sm:p-7 border border-white/60 dark:border-white/10 shadow-md space-y-4 bento-glow-emerald">
+          <div className="glass-panel rounded-3xl p-6 sm:p-7 border border-black/10 dark:border-white/15 shadow-md space-y-4 bento-glow-emerald">
             <div className="flex items-center justify-between pb-2 border-b border-black/[0.04] dark:border-white/[0.06]">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
@@ -420,7 +420,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
           </div>
 
           {/* Sub-Tile: Bottom Action Footer */}
-          <div className="glass-panel rounded-2xl p-4 border border-white/60 dark:border-white/10 shadow-sm flex items-center justify-end gap-3">
+          <div className="glass-panel rounded-2xl p-4 border border-black/10 dark:border-white/15 shadow-sm flex items-center justify-end gap-3">
             <Button 
               type="button" 
               variant="ghost" 

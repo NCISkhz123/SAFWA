@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
+import { useTheme } from '@/hooks/useTheme'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Sparkles, AlertCircle, Loader2, KeyRound, ShieldCheck, Tag, TrendingUp } from 'lucide-react'
+import { Sparkles, AlertCircle, Loader2, KeyRound, ShieldCheck, Tag, TrendingUp, Sun, Moon } from 'lucide-react'
 
 export function Login() {
   const { session, loading } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -49,11 +51,29 @@ export function Login() {
         <div className="absolute -bottom-[10%] -right-[10%] h-[600px] w-[600px] rounded-full bg-rose-400/15 blur-[140px] dark:bg-rose-900/15" />
       </div>
 
+      {/* Theme Switcher in Login */}
+      <div className="absolute top-4 right-4 z-50">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          className="rounded-xl h-10 w-10 glass-panel border border-black/10 dark:border-white/15 text-zinc-700 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/10 active:scale-[0.95] transition-all shadow-sm"
+          aria-label={`Ubah ke mode ${theme === 'dark' ? 'terang' : 'gelap'}`}
+          title={`Ubah ke mode ${theme === 'dark' ? 'terang' : 'gelap'}`}
+        >
+          {theme === 'dark' ? (
+            <Sun className="h-4 w-4 text-amber-400" aria-hidden="true" />
+          ) : (
+            <Moon className="h-4 w-4 text-zinc-700" aria-hidden="true" />
+          )}
+        </Button>
+      </div>
+
       <div className="w-full max-w-5xl mx-auto grid lg:grid-cols-12 gap-6 lg:gap-8 items-center">
         {/* Left Side: Bento Grid Showcase */}
         <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Bento Tile 1: Hero Showcase */}
-          <div className="sm:col-span-2 glass-panel rounded-3xl p-6 sm:p-8 border border-white/60 dark:border-white/10 shadow-lg relative overflow-hidden bento-glow-purple">
+          <div className="sm:col-span-2 glass-panel rounded-3xl p-6 sm:p-8 border border-black/10 dark:border-white/15 shadow-lg relative overflow-hidden bento-glow-purple">
             <div className="flex items-center gap-2 mb-4">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-500/20">
                 <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
@@ -69,20 +89,20 @@ export function Login() {
           </div>
 
           {/* Bento Tile 2: Auto Code Feature */}
-          <div className="glass-panel rounded-3xl p-5 sm:p-6 border border-white/60 dark:border-white/10 shadow-md flex flex-col justify-between">
+          <div className="glass-panel rounded-3xl p-5 sm:p-6 border border-black/10 dark:border-white/15 shadow-md flex flex-col justify-between">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 mb-3 border border-blue-500/20">
               <Tag className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
               <span className="font-semibold text-sm text-foreground block">Atomic SKU Codes</span>
               <p className="text-xs text-muted-foreground mt-1">
-                Format otomatis berbasis kategori seperti <code className="text-[11px] font-mono bg-black/5 dark:bg-white/10 px-1 py-0.5 rounded">KM001</code> tanpa duplikasi.
+                Format otomatis berbasis kategori seperti <code className="text-[11px] font-mono bg-black/5 dark:bg-white/10 px-1 py-0.5 rounded font-bold">KM001</code> tanpa duplikasi.
               </p>
             </div>
           </div>
 
           {/* Bento Tile 3: Margin & Profit */}
-          <div className="glass-panel rounded-3xl p-5 sm:p-6 border border-white/60 dark:border-white/10 shadow-md flex flex-col justify-between">
+          <div className="glass-panel rounded-3xl p-5 sm:p-6 border border-black/10 dark:border-white/15 shadow-md flex flex-col justify-between">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mb-3 border border-emerald-500/20">
               <TrendingUp className="h-5 w-5" aria-hidden="true" />
             </div>
@@ -97,13 +117,13 @@ export function Login() {
 
         {/* Right Side: Frosted Glass Login Panel */}
         <div className="lg:col-span-5">
-          <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-white/80 dark:border-white/15 shadow-2xl relative overflow-hidden backdrop-blur-2xl">
+          <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-black/10 dark:border-white/15 shadow-2xl relative overflow-hidden backdrop-blur-2xl">
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm">
                   <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                 </div>
-                <span className="font-bold text-sm tracking-tight">SAFWA ACCESS</span>
+                <span className="font-bold text-sm tracking-tight text-foreground">SAFWA ACCESS</span>
               </div>
               <h2 className="text-2xl font-bold tracking-tight text-foreground">Masuk ke Akun</h2>
               <p className="text-xs text-muted-foreground mt-1">

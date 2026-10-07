@@ -175,10 +175,10 @@ export function ProductList() {
       {/* Bento Grid: Metric Summary Tiles */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Bento Stat 1 */}
-        <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-white/60 dark:border-white/10 shadow-sm relative overflow-hidden bento-glow-purple">
+        <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-black/10 dark:border-white/15 shadow-sm relative overflow-hidden bento-glow-purple">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-muted-foreground">Total Koleksi</span>
-            <div className="h-8 w-8 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center border border-violet-500/20">
               <Package className="h-4 w-4" />
             </div>
           </div>
@@ -189,10 +189,10 @@ export function ProductList() {
         </div>
 
         {/* Bento Stat 2 */}
-        <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-white/60 dark:border-white/10 shadow-sm relative overflow-hidden bento-glow-blue">
+        <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-black/10 dark:border-white/15 shadow-sm relative overflow-hidden bento-glow-blue">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-muted-foreground">Kategori Aktif</span>
-            <div className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
               <Layers className="h-4 w-4" />
             </div>
           </div>
@@ -203,10 +203,10 @@ export function ProductList() {
         </div>
 
         {/* Bento Stat 3 */}
-        <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-white/60 dark:border-white/10 shadow-sm relative overflow-hidden bento-glow-emerald">
+        <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-black/10 dark:border-white/15 shadow-sm relative overflow-hidden bento-glow-emerald">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-muted-foreground">Rata-rata Margin</span>
-            <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
               <TrendingUp className="h-4 w-4" />
             </div>
           </div>
@@ -220,10 +220,10 @@ export function ProductList() {
         </div>
 
         {/* Bento Stat 4 */}
-        <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-white/60 dark:border-white/10 shadow-sm relative overflow-hidden">
+        <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-black/10 dark:border-white/15 shadow-sm relative overflow-hidden bento-glow-amber">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-muted-foreground">Nilai Pasaran Total</span>
-            <div className="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
               <Coins className="h-4 w-4" />
             </div>
           </div>
@@ -235,7 +235,7 @@ export function ProductList() {
       </div>
 
       {/* Filter & View Switcher Bar */}
-      <div className="glass-panel rounded-2xl p-3 sm:p-4 border border-white/60 dark:border-white/10 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <div className="glass-panel rounded-2xl p-3 sm:p-4 border border-black/10 dark:border-white/15 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -306,12 +306,12 @@ export function ProductList() {
 
       {/* Main Content Area: Loading / Empty / Grid / Table */}
       {loading ? (
-        <div className="glass-panel rounded-3xl flex flex-col items-center justify-center p-24 text-muted-foreground border border-white/60 dark:border-white/10">
+        <div className="glass-panel rounded-3xl flex flex-col items-center justify-center p-24 text-muted-foreground border border-black/10 dark:border-white/15">
           <Loader2 className="h-8 w-8 animate-spin mb-3 text-primary" />
           <p className="text-sm font-medium">Memuat katalog produk...</p>
         </div>
       ) : filteredProducts.length === 0 ? (
-        <div className="glass-panel rounded-3xl flex flex-col items-center justify-center p-16 sm:p-24 text-center border border-white/60 dark:border-white/10">
+        <div className="glass-panel rounded-3xl flex flex-col items-center justify-center p-16 sm:p-24 text-center border border-black/10 dark:border-white/15">
           <div className="bg-gradient-to-tr from-violet-500/10 to-rose-500/10 h-20 w-20 rounded-3xl flex items-center justify-center mb-5 border border-violet-500/20 shadow-inner">
             <Package className="h-9 w-9 text-violet-600 dark:text-violet-400" />
           </div>
@@ -327,14 +327,14 @@ export function ProductList() {
             <Button 
               variant="outline" 
               onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
-              className="rounded-xl"
+              className="rounded-xl border-black/10 dark:border-white/15"
             >
               Bersihkan Filter
             </Button>
           ) : (
             <Link 
               to="/products/new" 
-              className={cn(buttonVariants({ variant: 'default' }), "h-11 px-5 rounded-xl font-semibold shadow-md active:scale-[0.97]")}
+              className={cn(buttonVariants({ variant: 'default' }), "h-11 px-6 rounded-xl font-semibold shadow-md active:scale-[0.97] bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 flex items-center gap-2")}
             >
               <Plus className="mr-2 h-4 w-4" />
               Tambah Produk Pertama
@@ -454,7 +454,7 @@ export function ProductList() {
                           </Button>
                         }
                       />
-                      <AlertDialogContent className="glass-panel border-white/40 dark:border-white/10 rounded-3xl p-6 sm:p-8">
+                      <AlertDialogContent className="glass-panel border-black/10 dark:border-white/15 rounded-3xl p-6 sm:p-8">
                         <AlertDialogHeader>
                           <AlertDialogTitle className="text-xl font-bold">Hapus Produk Ini?</AlertDialogTitle>
                           <AlertDialogDescription className="text-sm text-muted-foreground mt-2">
@@ -482,7 +482,7 @@ export function ProductList() {
         </div>
       ) : (
         /* Frosted Glass Table View */
-        <div className="glass-panel rounded-3xl border border-white/60 dark:border-white/10 shadow-sm overflow-hidden">
+        <div className="glass-panel rounded-3xl border border-black/10 dark:border-white/15 shadow-sm overflow-hidden">
           <Table>
             <TableHeader className="bg-black/[0.02] dark:bg-white/[0.02] border-b border-black/[0.04] dark:border-white/[0.06]">
               <TableRow>
@@ -569,7 +569,7 @@ export function ProductList() {
                               </Button>
                             }
                           />
-                          <AlertDialogContent className="glass-panel rounded-3xl p-6 sm:p-8">
+                          <AlertDialogContent className="glass-panel border-black/10 dark:border-white/15 rounded-3xl p-6 sm:p-8">
                             <AlertDialogHeader>
                               <AlertDialogTitle className="text-xl font-bold">Hapus Produk</AlertDialogTitle>
                               <AlertDialogDescription className="text-sm text-muted-foreground mt-2">

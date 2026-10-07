@@ -141,7 +141,7 @@ export function Settings() {
       {/* Bento Grid: 2 Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Bento Tile 1: Form Tambah Kategori (4 Cols) */}
-        <div className="lg:col-span-5 glass-panel rounded-3xl p-6 sm:p-7 border border-white/60 dark:border-white/10 shadow-md relative overflow-hidden bento-glow-purple">
+        <div className="lg:col-span-5 glass-panel rounded-3xl p-6 sm:p-7 border border-black/10 dark:border-white/15 shadow-md relative overflow-hidden bento-glow-purple">
           <div className="flex items-center gap-2 mb-5">
             <div className="h-9 w-9 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center border border-violet-500/20">
               <Tag className="h-4 w-4" />
@@ -222,7 +222,7 @@ export function Settings() {
         </div>
 
         {/* Bento Tile 2: Daftar Kategori (7 Cols) */}
-        <div className="lg:col-span-7 glass-panel rounded-3xl p-6 sm:p-7 border border-white/60 dark:border-white/10 shadow-md">
+        <div className="lg:col-span-7 glass-panel rounded-3xl p-6 sm:p-7 border border-black/10 dark:border-white/15 shadow-md">
           <div className="flex items-center justify-between mb-5 pb-3 border-b border-black/[0.04] dark:border-white/[0.06]">
             <div className="flex items-center gap-2">
               <div className="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
@@ -252,7 +252,7 @@ export function Settings() {
               </p>
             </div>
           ) : (
-            <div className="rounded-2xl border border-black/[0.04] dark:border-white/[0.06] overflow-hidden">
+            <div className="rounded-2xl border border-black/10 dark:border-white/15 overflow-hidden">
               <Table>
                 <TableHeader className="bg-black/[0.02] dark:bg-white/[0.02]">
                   <TableRow>
