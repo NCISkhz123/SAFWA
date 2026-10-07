@@ -626,34 +626,34 @@ export function ProductForm({ initialData }: ProductFormProps) {
               </div>
             )}
           </div>
-
-          {/* Sub-Tile: Bottom Action Footer */}
-          <div className="glass-panel rounded-2xl p-4 border border-black/10 dark:border-white/15 shadow-sm flex items-center justify-end gap-3">
-            <Button 
-              type="button" 
-              variant="ghost" 
-              onClick={() => navigate('/products')}
-              disabled={loading}
-              className="rounded-xl active:scale-[0.97]"
-            >
-              Batalkan
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={loading}
-              className="h-11 px-6 rounded-xl font-semibold shadow-md active:scale-[0.97] transition-all bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 flex items-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  <span>Menyimpan Produk...</span>
-                </>
-              ) : (
-                <span>{isEditMode ? 'Simpan Perubahan' : 'Tambahkan ke Katalog'}</span>
-              )}
-            </Button>
-          </div>
         </div>
+      </div>
+
+      {/* Action Footer (Outside Grid) */}
+      <div className="glass-panel rounded-2xl p-4 border border-black/10 dark:border-white/15 shadow-sm flex items-center justify-end gap-3 mt-6">
+        <Button 
+          type="button" 
+          variant="ghost" 
+          onClick={() => navigate('/products')}
+          disabled={loading}
+          className="rounded-xl active:scale-[0.97]"
+        >
+          Batalkan
+        </Button>
+        <Button 
+          type="submit" 
+          disabled={loading}
+          className="h-11 px-6 rounded-xl font-semibold shadow-md active:scale-[0.97] transition-all bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 flex items-center gap-2"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              <span>Menyimpan Produk...</span>
+            </>
+          ) : (
+            <span>{isEditMode ? 'Simpan Perubahan' : 'Tambahkan ke Katalog'}</span>
+          )}
+        </Button>
       </div>
 
       <Dialog open={isCropModalOpen} onOpenChange={setIsCropModalOpen}>
