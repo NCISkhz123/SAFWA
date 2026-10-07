@@ -16,6 +16,12 @@ export interface Product {
   margin_percent: number;
   promotion_cost: number;
   image_path: string | null;
+  tipe: 'bordir manual' | 'bordir mesin' | 'tanpa bordir';
+  motif: string;
+  warna: string;
+  bahan: string;
+  ukuran: string;
+  kelengkapan: string;
   created_at?: string;
   updated_at?: string;
 }

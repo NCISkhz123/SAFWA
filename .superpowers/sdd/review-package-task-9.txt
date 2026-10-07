@@ -1,0 +1,456 @@
+﻿Commits:
+93f30fc feat: edit product functionality
+
+Stat:
+ src/App.tsx                             |   2 +
+ src/components/products/ProductForm.tsx | 139 ++++++++++++++++++++++++--------
+ src/pages/EditProductPage.tsx           |  87 ++++++++++++++++++++
+ 3 files changed, 193 insertions(+), 35 deletions(-)
+
+Diff:
+diff --git a/src/App.tsx b/src/App.tsx
+index 9a5bda4..51c678b 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -1,28 +1,30 @@
+ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+ import { Login } from '@/pages/Login'
+ import { Layout } from '@/components/shared/Layout'
+ import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
+ import { Settings } from '@/pages/Settings'
+ import { ProductList } from '@/pages/ProductList'
+ import { ProductFormPage } from '@/pages/ProductFormPage'
++import EditProductPage from '@/pages/EditProductPage'
+ 
+ function App() {
+   return (
+     <BrowserRouter>
+       <Routes>
+         <Route path="/login" element={<Login />} />
+         
+         <Route element={<ProtectedRoute />}>
+           <Route element={<Layout />}>
+             <Route path="/" element={<Navigate to="/products" replace />} />
+             <Route path="/products" element={<ProductList />} />
+             <Route path="/products/new" element={<ProductFormPage />} />
++            <Route path="/products/:id/edit" element={<EditProductPage />} />
+             <Route path="/settings" element={<Settings />} />
+           </Route>
+         </Route>
+       </Routes>
+     </BrowserRouter>
+   )
+ }
+ 
+ export default App
+diff --git a/src/components/products/ProductForm.tsx b/src/components/products/ProductForm.tsx
+index 47950fd..5414add 100644
+--- a/src/components/products/ProductForm.tsx
++++ b/src/components/products/ProductForm.tsx
+@@ -1,40 +1,52 @@
+ import React, { useState, useEffect } from 'react';
+ import { useNavigate } from 'react-router-dom';
+ import { supabase } from '@/lib/supabase';
+-import { uploadImage } from '@/lib/api';
++import { uploadImage, deleteImage } from '@/lib/api';
+ import { toast } from 'sonner';
+ import { Button } from '@/components/ui/button';
+ import { Input } from '@/components/ui/input';
+ import { Label } from '@/components/ui/label';
+ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+-import type { Category } from '@/types';
++import type { Category, Product } from '@/types';
+ import { Loader2, ImagePlus } from 'lucide-react';
+ 
+-export function ProductForm() {
++interface ProductFormProps {
++  initialData?: Product;
++}
++
++export function ProductForm({ initialData }: ProductFormProps) {
+   const navigate = useNavigate();
+   const [loading, setLoading] = useState(false);
+   const [categories, setCategories] = useState<Category[]>([]);
+   
++  const isEditMode = !!initialData;
++
+   const [formData, setFormData] = useState({
+-    name: '',
+-    category_id: '',
+-    supplier_price: '',
+-    market_price: '',
++    name: initialData?.name || '',
++    category_id: initialData?.category_id || '',
++    supplier_price: initialData?.supplier_price?.toString() || '',
++    market_price: initialData?.market_price?.toString() || '',
++    margin_percent: initialData?.margin_percent?.toString() || '0',
++    promotion_cost: initialData?.promotion_cost?.toString() || '0',
+   });
+   const [imageFile, setImageFile] = useState<File | null>(null);
+   const [imagePreview, setImagePreview] = useState<string | null>(null);
+ 
+   useEffect(() => {
+     fetchCategories();
+-  }, []);
++    if (initialData?.image_path) {
++      const { data } = supabase.storage.from('product_images').getPublicUrl(initialData.image_path);
++      setImagePreview(data.publicUrl);
++    }
++  }, [initialData]);
+ 
+   const fetchCategories = async () => {
+     try {
+       const { data, error } = await supabase.from('categories').select('*').order('name');
+       if (error) throw error;
+       setCategories(data || []);
+     } catch (error) {
+       console.error('Failed to fetch categories:', error);
+       toast.error('Gagal memuat kategori produk');
+     }
+@@ -67,118 +79,141 @@ export function ProductForm() {
+     e.preventDefault();
+     setLoading(true);
+ 
+     try {
+       if (!formData.name || !formData.category_id || !formData.supplier_price || !formData.market_price) {
+         throw new Error('Semua field wajib diisi');
+       }
+ 
+       const supplierPrice = parseFloat(formData.supplier_price);
+       const marketPrice = parseFloat(formData.market_price);
++      const marginPercent = parseFloat(formData.margin_percent) || 0;
++      const promotionCost = parseFloat(formData.promotion_cost) || 0;
+ 
+-      if (supplierPrice < 0 || marketPrice < 0) {
+-        throw new Error('Harga tidak boleh negatif');
++      if (supplierPrice < 0 || marketPrice < 0 || marginPercent < 0 || promotionCost < 0) {
++        throw new Error('Nilai tidak boleh negatif');
+       }
+ 
+-      let image_path = null;
++      let image_path = initialData?.image_path || null;
++      
+       if (imageFile) {
+-        image_path = await uploadImage(imageFile);
+-        if (!image_path) {
++        const new_image_path = await uploadImage(imageFile);
++        if (!new_image_path) {
+           throw new Error('Gagal mengupload gambar');
+         }
++        
++        // If updating and there was an old image, delete it
++        if (isEditMode && initialData?.image_path) {
++          try {
++            await deleteImage(initialData.image_path);
++          } catch (deleteErr) {
++            console.error('Gagal menghapus gambar lama', deleteErr);
++            // Continue with saving even if delete fails
++          }
++        }
++        
++        image_path = new_image_path;
+       }
+ 
+-      const { error } = await supabase.from('products').insert([
+-        {
+-          name: formData.name,
+-          category_id: formData.category_id,
+-          supplier_price: supplierPrice,
+-          market_price: marketPrice,
+-          margin_percent: 0,
+-          promotion_cost: 0,
+-          image_path,
+-        },
+-      ]);
++      const payload = {
++        name: formData.name,
++        category_id: formData.category_id,
++        supplier_price: supplierPrice,
++        market_price: marketPrice,
++        margin_percent: isEditMode ? marginPercent : 0,
++        promotion_cost: isEditMode ? promotionCost : 0,
++        image_path,
++      };
+ 
+-      if (error) throw error;
++      if (isEditMode) {
++        const { error } = await supabase.from('products').update(payload).eq('id', initialData.id);
++        if (error) throw error;
++        toast.success('Produk berhasil diperbarui');
++      } else {
++        const { error } = await supabase.from('products').insert([payload]);
++        if (error) throw error;
++        toast.success('Produk berhasil ditambahkan');
++      }
+ 
+-      toast.success('Produk berhasil ditambahkan');
+       navigate('/products');
+     } catch (error: any) {
+-      toast.error(error.message || 'Gagal menambahkan produk');
++      toast.error(error.message || `Gagal ${isEditMode ? 'memperbarui' : 'menambahkan'} produk`);
+       console.error(error);
+     } finally {
+       setLoading(false);
+     }
+   };
+ 
+   return (
+     <Card className="w-full max-w-2xl mx-auto shadow-sm">
+       <CardHeader className="space-y-1">
+-        <CardTitle className="text-2xl font-semibold">Tambah Produk Baru</CardTitle>
++        <CardTitle className="text-2xl font-semibold">{isEditMode ? 'Edit Produk' : 'Tambah Produk Baru'}</CardTitle>
+         <CardDescription>
+-          Masukkan detail produk untuk menambahkannya ke inventaris.
++          {isEditMode ? 'Ubah detail produk yang sudah ada di inventaris.' : 'Masukkan detail produk untuk menambahkannya ke inventaris.'}
+         </CardDescription>
+       </CardHeader>
+       <form onSubmit={handleSubmit} className="space-y-6">
+         <CardContent className="space-y-6">
+           {/* Image Upload */}
+           <div className="space-y-3">
+             <Label>Foto Produk</Label>
+             <div className="flex items-center gap-4">
+               <div 
+-                className="flex items-center justify-center w-24 h-24 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 overflow-hidden relative"
++                className="flex items-center justify-center w-24 h-24 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 overflow-hidden relative focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
++                aria-label="Preview foto produk"
+               >
+                 {imagePreview ? (
+-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
++                  <img src={imagePreview} alt="Preview produk" className="w-full h-full object-cover" />
+                 ) : (
+-                  <ImagePlus className="w-8 h-8 text-muted-foreground/50" />
++                  <ImagePlus className="w-8 h-8 text-muted-foreground/50" aria-hidden="true" />
+                 )}
+               </div>
+               <div className="flex-1 space-y-1">
+                 <Input
+                   type="file"
+                   accept="image/*"
+                   onChange={handleImageChange}
+-                  className="w-full max-w-xs cursor-pointer"
++                  className="w-full max-w-xs cursor-pointer focus-visible:ring-2"
+                   disabled={loading}
++                  aria-label="Pilih foto produk"
+                 />
+                 <p className="text-xs text-muted-foreground">
+                   Format yang didukung: JPG, PNG. Maksimal 5MB.
+                 </p>
+               </div>
+             </div>
+           </div>
+ 
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="space-y-2">
+               <Label htmlFor="name">Nama Produk</Label>
+               <Input
+                 id="name"
+                 name="name"
+                 placeholder="Cth: Kemeja Flanel"
+                 value={formData.name}
+                 onChange={handleChange}
+                 disabled={loading}
+                 required
++                aria-required="true"
+               />
+             </div>
+ 
+             <div className="space-y-2">
+               <Label htmlFor="category_id">Kategori</Label>
+               <Select 
+                 value={formData.category_id} 
+                 onValueChange={handleCategoryChange} 
+                 disabled={loading || categories.length === 0}
+                 required
+               >
+-                <SelectTrigger id="category_id">
++                <SelectTrigger id="category_id" aria-required="true">
+                   <SelectValue placeholder="Pilih Kategori" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   {categories.map((cat) => (
+                     <SelectItem key={cat.id} value={cat.id}>
+                       {cat.name}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
+@@ -189,48 +224,82 @@ export function ProductForm() {
+               <Input
+                 id="supplier_price"
+                 name="supplier_price"
+                 type="number"
+                 min="0"
+                 placeholder="0"
+                 value={formData.supplier_price}
+                 onChange={handleChange}
+                 disabled={loading}
+                 required
++                aria-required="true"
+               />
+             </div>
+ 
+             <div className="space-y-2">
+               <Label htmlFor="market_price">Harga Jual (Rp)</Label>
+               <Input
+                 id="market_price"
+                 name="market_price"
+                 type="number"
+                 min="0"
+                 placeholder="0"
+                 value={formData.market_price}
+                 onChange={handleChange}
+                 disabled={loading}
+                 required
++                aria-required="true"
+               />
+             </div>
++
++            {isEditMode && (
++              <>
++                <div className="space-y-2">
++                  <Label htmlFor="margin_percent">Margin (%)</Label>
++                  <Input
++                    id="margin_percent"
++                    name="margin_percent"
++                    type="number"
++                    min="0"
++                    step="0.01"
++                    placeholder="0"
++                    value={formData.margin_percent}
++                    onChange={handleChange}
++                    disabled={loading}
++                  />
++                </div>
++                <div className="space-y-2">
++                  <Label htmlFor="promotion_cost">Biaya Promosi (Rp)</Label>
++                  <Input
++                    id="promotion_cost"
++                    name="promotion_cost"
++                    type="number"
++                    min="0"
++                    placeholder="0"
++                    value={formData.promotion_cost}
++                    onChange={handleChange}
++                    disabled={loading}
++                  />
++                </div>
++              </>
++            )}
+           </div>
+         </CardContent>
+         
+         <CardFooter className="flex justify-end gap-3 pt-4 border-t">
+           <Button 
+             type="button" 
+             variant="outline" 
+             onClick={() => navigate('/products')}
+             disabled={loading}
+           >
+             Batal
+           </Button>
+           <Button type="submit" disabled={loading}>
+             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+-            Simpan Produk
++            {isEditMode ? 'Simpan Perubahan' : 'Simpan Produk'}
+           </Button>
+         </CardFooter>
+       </form>
+     </Card>
+   );
+ }
+diff --git a/src/pages/EditProductPage.tsx b/src/pages/EditProductPage.tsx
+new file mode 100644
+index 0000000..102c8e8
+--- /dev/null
++++ b/src/pages/EditProductPage.tsx
+@@ -0,0 +1,87 @@
++import { useEffect, useState } from 'react';
++import { useParams, useNavigate } from 'react-router-dom';
++import { supabase } from '@/lib/supabase';
++import { ProductForm } from '@/components/products/ProductForm';
++import type { Product } from '@/types';
++import { Loader2, ArrowLeft } from 'lucide-react';
++import { Button } from '@/components/ui/button';
++import { toast } from 'sonner';
++
++export default function EditProductPage() {
++  const { id } = useParams<{ id: string }>();
++  const navigate = useNavigate();
++  const [product, setProduct] = useState<Product | null>(null);
++  const [loading, setLoading] = useState(true);
++
++  useEffect(() => {
++    if (id) {
++      fetchProduct(id);
++    }
++  }, [id]);
++
++  const fetchProduct = async (productId: string) => {
++    try {
++      setLoading(true);
++      const { data, error } = await supabase
++        .from('products')
++        .select('*')
++        .eq('id', productId)
++        .single();
++
++      if (error) {
++        throw error;
++      }
++
++      if (!data) {
++        throw new Error('Produk tidak ditemukan');
++      }
++
++      setProduct(data as Product);
++    } catch (error: any) {
++      console.error('Failed to fetch product:', error);
++      toast.error('Gagal memuat data produk');
++      navigate('/products');
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  if (loading) {
++    return (
++      <div className="flex h-full items-center justify-center min-h-[400px]">
++        <div className="flex flex-col items-center gap-2 text-muted-foreground">
++          <Loader2 className="h-8 w-8 animate-spin" />
++          <p>Memuat data produk...</p>
++        </div>
++      </div>
++    );
++  }
++
++  if (!product) {
++    return null; // Handled by catch block redirect
++  }
++
++  return (
++    <div className="space-y-6">
++      <div className="flex items-center gap-4">
++        <Button 
++          variant="ghost" 
++          size="icon" 
++          onClick={() => navigate('/products')}
++          aria-label="Kembali ke daftar produk"
++          className="rounded-full hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
++        >
++          <ArrowLeft className="h-5 w-5" />
++        </Button>
++        <div>
++          <h1 className="text-3xl font-bold tracking-tight text-foreground">Edit Produk</h1>
++          <p className="text-muted-foreground">Ubah informasi produk yang sudah ada.</p>
++        </div>
++      </div>
++
++      <div className="mt-6">
++        <ProductForm initialData={product} />
++      </div>
++    </div>
++  );
++}
+

@@ -1,0 +1,395 @@
+﻿Commits:
+f75ed78 feat: settings page for categories CRUD
+
+Stat:
+ .superpowers/sdd/task-5-report.md |  21 ++++
+ src/App.tsx                       |   3 +-
+ src/components/shared/Layout.tsx  |  12 +-
+ src/pages/Settings.tsx            | 254 ++++++++++++++++++++++++++++++++++++++
+ src/types/index.ts                |  21 ++++
+ 5 files changed, 305 insertions(+), 6 deletions(-)
+
+Diff:
+diff --git a/.superpowers/sdd/task-5-report.md b/.superpowers/sdd/task-5-report.md
+new file mode 100644
+index 0000000..60ed0d4
+--- /dev/null
++++ b/.superpowers/sdd/task-5-report.md
+@@ -0,0 +1,21 @@
++# Task 5 Report
++
++## What was implemented
++- Created `src/types/index.ts` containing the `Category` and `Product` interfaces to define types across the project.
++- Created `src/pages/Settings.tsx` to handle Categories CRUD using Supabase. Displayed categories in a shadcn `Table` and provided a form with accessible labels to add categories. Implemented an `AlertDialog` for confirmation before deleting categories, along with clean empty and loading states.
++- Replaced routing in `src/App.tsx` to use the newly created `Settings` component for the `/settings` path.
++- Fixed typing issues across `@base-ui/react` generated shadcn UI components (`SheetTrigger` and `AlertDialogTrigger`), successfully adapting from `asChild` to the `render` prop pattern.
++
++## Files changed
++- `src/types/index.ts` (new)
++- `src/pages/Settings.tsx` (new)
++- `src/App.tsx` (modified)
++- `src/components/shared/Layout.tsx` (modified, type issue fixed)
++
++## Self-review findings
++- Checked UI/UX aspects: Proper accessibility (`aria-label`, `aria-hidden`, clear focus rings natively with shadcn), clear layout with grouping (Add Category on the left/top, list on the right/bottom). Used clear red color for destructive actions (Delete buttons).
++- Handled Supabase loading and error states securely via `sonner` toasts. Error messages are simple.
++- Code compiles fully (`npm run build`). `verbatimModuleSyntax` TS issue was caught and successfully fixed.
++
++## Issues or concerns
++- None. Everything matches the brief securely and follows required guidelines for the settings and categories feature.
+diff --git a/src/App.tsx b/src/App.tsx
+index 6b6d011..608904c 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -1,24 +1,25 @@
+ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+ import { Login } from '@/pages/Login'
+ import { Layout } from '@/components/shared/Layout'
+ import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
++import { Settings } from '@/pages/Settings'
+ 
+ function App() {
+   return (
+     <BrowserRouter>
+       <Routes>
+         <Route path="/login" element={<Login />} />
+         
+         <Route element={<ProtectedRoute />}>
+           <Route element={<Layout />}>
+             <Route path="/" element={<Navigate to="/products" replace />} />
+             <Route path="/products" element={<div className="animate-in fade-in slide-in-from-bottom-4">Products Placeholder</div>} />
+-            <Route path="/settings" element={<div className="animate-in fade-in slide-in-from-bottom-4">Settings Placeholder</div>} />
++            <Route path="/settings" element={<Settings />} />
+           </Route>
+         </Route>
+       </Routes>
+     </BrowserRouter>
+   )
+ }
+ 
+ export default App
+diff --git a/src/components/shared/Layout.tsx b/src/components/shared/Layout.tsx
+index 9e174a2..a255966 100644
+--- a/src/components/shared/Layout.tsx
++++ b/src/components/shared/Layout.tsx
+@@ -54,25 +54,27 @@ export function Layout() {
+               variant="ghost"
+               size="sm"
+               onClick={signOut}
+               className="hidden md:flex gap-2 text-muted-foreground hover:text-foreground"
+             >
+               <LogOut className="h-4 w-4" aria-hidden="true" />
+               Sign Out
+             </Button>
+             
+             <Sheet open={isOpen} onOpenChange={setIsOpen}>
+-              <SheetTrigger asChild>
+-                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Toggle Menu">
+-                  <Menu className="h-5 w-5" aria-hidden="true" />
+-                </Button>
+-              </SheetTrigger>
++              <SheetTrigger
++                render={
++                  <Button variant="ghost" size="icon" className="md:hidden" aria-label="Toggle Menu">
++                    <Menu className="h-5 w-5" aria-hidden="true" />
++                  </Button>
++                }
++              />
+               <SheetContent side="right">
+                 <SheetHeader>
+                   <SheetTitle>Menu</SheetTitle>
+                 </SheetHeader>
+                 <nav aria-label="Mobile Navigation" className="flex flex-col gap-4 mt-6">
+                   {navItems.map((item) => {
+                     const isActive = location.pathname.startsWith(item.path)
+                     return (
+                       <Link
+                         key={item.path}
+diff --git a/src/pages/Settings.tsx b/src/pages/Settings.tsx
+new file mode 100644
+index 0000000..68ea7ca
+--- /dev/null
++++ b/src/pages/Settings.tsx
+@@ -0,0 +1,254 @@
++import React, { useEffect, useState } from 'react';
++import { supabase } from '@/lib/supabase';
++import type { Category } from '@/types';
++import { Button } from '@/components/ui/button';
++import { Input } from '@/components/ui/input';
++import { Label } from '@/components/ui/label';
++import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
++import {
++  Table,
++  TableBody,
++  TableCell,
++  TableHead,
++  TableHeader,
++  TableRow,
++} from '@/components/ui/table';
++import {
++  AlertDialog,
++  AlertDialogAction,
++  AlertDialogCancel,
++  AlertDialogContent,
++  AlertDialogDescription,
++  AlertDialogFooter,
++  AlertDialogHeader,
++  AlertDialogTitle,
++  AlertDialogTrigger,
++} from '@/components/ui/alert-dialog';
++import { Loader2, Trash2, PlusCircle } from 'lucide-react';
++import { toast } from 'sonner';
++
++export function Settings() {
++  const [categories, setCategories] = useState<Category[]>([]);
++  const [loading, setLoading] = useState(true);
++  const [submitting, setSubmitting] = useState(false);
++  const [name, setName] = useState('');
++  const [code, setCode] = useState('');
++
++  const [deleteId, setDeleteId] = useState<string | null>(null);
++  const [deleting, setDeleting] = useState(false);
++
++  useEffect(() => {
++    fetchCategories();
++  }, []);
++
++  const fetchCategories = async () => {
++    try {
++      setLoading(true);
++      const { data, error } = await supabase
++        .from('categories')
++        .select('*')
++        .order('created_at', { ascending: false });
++
++      if (error) throw error;
++      setCategories(data || []);
++    } catch (error: any) {
++      toast.error('Failed to load categories', {
++        description: error.message,
++      });
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  const handleAddCategory = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!name.trim() || !code.trim()) {
++      toast.error('Validation Error', { description: 'Name and Code are required.' });
++      return;
++    }
++
++    try {
++      setSubmitting(true);
++      const { data, error } = await supabase
++        .from('categories')
++        .insert([{ name: name.trim(), code: code.trim().toUpperCase() }])
++        .select();
++
++      if (error) throw error;
++      
++      if (data) {
++        setCategories((prev) => [data[0], ...prev]);
++        setName('');
++        setCode('');
++        toast.success('Category added successfully.');
++      }
++    } catch (error: any) {
++      toast.error('Failed to add category', {
++        description: error.message,
++      });
++    } finally {
++      setSubmitting(false);
++    }
++  };
++
++  const handleDelete = async () => {
++    if (!deleteId) return;
++
++    try {
++      setDeleting(true);
++      const { error } = await supabase
++        .from('categories')
++        .delete()
++        .eq('id', deleteId);
++
++      if (error) throw error;
++
++      setCategories((prev) => prev.filter((c) => c.id !== deleteId));
++      toast.success('Category deleted successfully.');
++    } catch (error: any) {
++      toast.error('Failed to delete category', {
++        description: error.message,
++      });
++    } finally {
++      setDeleting(false);
++      setDeleteId(null);
++    }
++  };
++
++  return (
++    <div className="space-y-6 max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
++      <div>
++        <h1 className="text-3xl font-bold tracking-tight text-foreground">Settings</h1>
++        <p className="text-muted-foreground mt-2">Manage your application categories and configurations.</p>
++      </div>
++
++      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
++        {/* Add Category Form */}
++        <Card className="lg:col-span-1 shadow-sm border-border">
++          <CardHeader>
++            <CardTitle className="text-xl">Add Category</CardTitle>
++            <CardDescription>Create a new product category.</CardDescription>
++          </CardHeader>
++          <CardContent>
++            <form onSubmit={handleAddCategory} className="space-y-4">
++              <div className="space-y-2">
++                <Label htmlFor="name">Category Name</Label>
++                <Input
++                  id="name"
++                  placeholder="e.g. Shirts"
++                  value={name}
++                  onChange={(e) => setName(e.target.value)}
++                  disabled={submitting}
++                  required
++                  aria-required="true"
++                />
++              </div>
++              <div className="space-y-2">
++                <Label htmlFor="code">Category Code</Label>
++                <Input
++                  id="code"
++                  placeholder="e.g. SHR"
++                  value={code}
++                  onChange={(e) => setCode(e.target.value.toUpperCase())}
++                  disabled={submitting}
++                  required
++                  aria-required="true"
++                  maxLength={5}
++                />
++                <p className="text-xs text-muted-foreground">Used as prefix for product codes.</p>
++              </div>
++              <Button type="submit" className="w-full" disabled={submitting || !name || !code}>
++                {submitting ? (
++                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
++                ) : (
++                  <PlusCircle className="mr-2 h-4 w-4" aria-hidden="true" />
++                )}
++                Add Category
++              </Button>
++            </form>
++          </CardContent>
++        </Card>
++
++        {/* Categories List */}
++        <Card className="lg:col-span-2 shadow-sm border-border">
++          <CardHeader>
++            <CardTitle className="text-xl">Categories</CardTitle>
++            <CardDescription>A list of all your product categories.</CardDescription>
++          </CardHeader>
++          <CardContent>
++            {loading ? (
++              <div className="flex justify-center items-center py-12">
++                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" aria-hidden="true" />
++                <span className="sr-only">Loading categories...</span>
++              </div>
++            ) : categories.length === 0 ? (
++              <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
++                <p className="text-sm text-muted-foreground">No categories found. Add one to get started.</p>
++              </div>
++            ) : (
++              <div className="rounded-md border">
++                <Table>
++                  <TableHeader>
++                    <TableRow>
++                      <TableHead>Name</TableHead>
++                      <TableHead>Code</TableHead>
++                      <TableHead className="text-right">Actions</TableHead>
++                    </TableRow>
++                  </TableHeader>
++                  <TableBody>
++                    {categories.map((category) => (
++                      <TableRow key={category.id}>
++                        <TableCell className="font-medium">{category.name}</TableCell>
++                        <TableCell>
++                          <span className="inline-flex items-center rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground ring-1 ring-inset ring-secondary/20">
++                            {category.code}
++                          </span>
++                        </TableCell>
++                        <TableCell className="text-right">
++                          <AlertDialog>
++                            <AlertDialogTrigger
++                              render={
++                                <Button
++                                  variant="ghost"
++                                  size="sm"
++                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
++                                  onClick={() => setDeleteId(category.id)}
++                                  aria-label={`Delete ${category.name} category`}
++                                >
++                                  <Trash2 className="h-4 w-4" aria-hidden="true" />
++                                </Button>
++                              }
++                            />
++                            <AlertDialogContent>
++                              <AlertDialogHeader>
++                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
++                                <AlertDialogDescription>
++                                  This action cannot be undone. This will permanently delete the category 
++                                  <strong className="font-semibold text-foreground"> {category.name}</strong> and remove its data from our servers.
++                                </AlertDialogDescription>
++                              </AlertDialogHeader>
++                              <AlertDialogFooter>
++                                <AlertDialogCancel onClick={() => setDeleteId(null)}>Cancel</AlertDialogCancel>
++                                <AlertDialogAction
++                                  onClick={handleDelete}
++                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
++                                  disabled={deleting}
++                                >
++                                  {deleting ? 'Deleting...' : 'Delete'}
++                                </AlertDialogAction>
++                              </AlertDialogFooter>
++                            </AlertDialogContent>
++                          </AlertDialog>
++                        </TableCell>
++                      </TableRow>
++                    ))}
++                  </TableBody>
++                </Table>
++              </div>
++            )}
++          </CardContent>
++        </Card>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/types/index.ts b/src/types/index.ts
+new file mode 100644
+index 0000000..0f2c956
+--- /dev/null
++++ b/src/types/index.ts
+@@ -0,0 +1,21 @@
++export interface Category {
++  id: string;
++  name: string;
++  code: string;
++  created_at?: string;
++  updated_at?: string;
++}
++
++export interface Product {
++  id: string;
++  name: string;
++  product_code: string;
++  category_id: string;
++  supplier_price: number;
++  market_price: number;
++  margin_percent: number;
++  promotion_cost: number;
++  image_path: string | null;
++  created_at?: string;
++  updated_at?: string;
++}
+

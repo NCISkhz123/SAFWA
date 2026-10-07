@@ -1,7 +1,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import { ProductForm } from '@/components/products/ProductForm';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function ProductFormPage() {
@@ -20,18 +20,7 @@ export function ProductFormPage() {
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-zinc-900/5 dark:bg-white/10 text-zinc-800 dark:text-zinc-200 border border-black/5 dark:border-white/10 mb-1">
-            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-            Entri Katalog Mode
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-            Tambah Koleksi Baru
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Lengkapi data produk. Sistem akan otomatis menetapkan nomor urut SKU unik berdasarkan kategori yang dipilih.
-          </p>
-        </div>
+
       </div>
 
       <ProductForm />

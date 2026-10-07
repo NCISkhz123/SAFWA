@@ -1,0 +1,102 @@
+﻿Commits:
+83b9577 feat: api utilities for storage and products
+
+Stat:
+ src/lib/api.ts     | 67 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/types/index.ts |  4 ++++
+ 2 files changed, 71 insertions(+)
+
+Diff:
+diff --git a/src/lib/api.ts b/src/lib/api.ts
+new file mode 100644
+index 0000000..1969f73
+--- /dev/null
++++ b/src/lib/api.ts
+@@ -0,0 +1,67 @@
++import { supabase } from './supabase';
++import type { ProductWithCategory } from '../types';
++
++export const uploadImage = async (file: File): Promise<string | null> => {
++  const fileExt = file.name.split('.').pop();
++  const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
++  const filePath = `${fileName}`;
++
++  const { data, error } = await supabase.storage
++    .from('product_images')
++    .upload(filePath, file);
++
++  if (error) {
++    console.error('Error uploading image:', error);
++    return null;
++  }
++
++  return data.path;
++};
++
++export const deleteImage = async (path: string): Promise<void> => {
++  const { error } = await supabase.storage
++    .from('product_images')
++    .remove([path]);
++
++  if (error) {
++    console.error('Error deleting image:', error);
++    throw error;
++  }
++};
++
++export const fetchProducts = async (): Promise<ProductWithCategory[]> => {
++  const { data, error } = await supabase
++    .from('products')
++    .select(`
++      *,
++      categories:category_id (*)
++    `)
++    .order('created_at', { ascending: false });
++
++  if (error) {
++    console.error('Error fetching products:', error);
++    throw error;
++  }
++
++  return data as ProductWithCategory[];
++};
++
++export const deleteProduct = async (id: string, imagePath?: string | null): Promise<void> => {
++  if (imagePath) {
++    try {
++      await deleteImage(imagePath);
++    } catch (error) {
++      console.error('Failed to delete associated image:', error);
++    }
++  }
++
++  const { error } = await supabase
++    .from('products')
++    .delete()
++    .eq('id', id);
++
++  if (error) {
++    console.error('Error deleting product:', error);
++    throw error;
++  }
++};
+diff --git a/src/types/index.ts b/src/types/index.ts
+index 0f2c956..db7a9d5 100644
+--- a/src/types/index.ts
++++ b/src/types/index.ts
+@@ -12,10 +12,14 @@ export interface Product {
+   product_code: string;
+   category_id: string;
+   supplier_price: number;
+   market_price: number;
+   margin_percent: number;
+   promotion_cost: number;
+   image_path: string | null;
+   created_at?: string;
+   updated_at?: string;
+ }
++
++export interface ProductWithCategory extends Product {
++  categories?: Category;
++}
+

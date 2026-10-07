@@ -6,14 +6,10 @@ import {
   Trash2, 
   Image as ImageIcon, 
   Loader2, 
-  Search, 
-  Package, 
-  TrendingUp, 
-  Layers, 
-  Coins, 
+  Search,
+  Package,
   LayoutGrid, 
-  ListFilter,
-  Sparkles
+  ListFilter
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { fetchProducts, deleteProduct } from '@/lib/api';
@@ -120,17 +116,16 @@ export function ProductList() {
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [products]);
 
-  // Bento Statistics
-  const stats = useMemo(() => {
-    const totalCount = products.length;
-    const totalMarketValue = products.reduce((acc, p) => acc + (p.market_price || 0), 0);
-    const avgMargin = totalCount > 0 
-      ? Math.round(products.reduce((acc, p) => acc + (p.margin_percent || 0), 0) / totalCount) 
-      : 0;
-    const distinctCategories = new Set(products.map((p) => p.category_id)).size;
+  const getFinalPrice = (p: ProductWithCategory) => {
+    const supplier = p.supplier_price || 0;
+    const ppn = supplier * 0.12;
+    const margin = supplier * ((p.margin_percent || 0) / 100);
+    const promo = p.promotion_cost || 0;
+    return Math.round(supplier + ppn + margin + promo);
+  };
 
-    return { totalCount, totalMarketValue, avgMargin, distinctCategories };
-  }, [products]);
+  // Bento Statistics
+
 
   if (error) {
     return (
@@ -146,19 +141,8 @@ export function ProductList() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
       {/* Top Bento Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-zinc-900/5 dark:bg-white/10 text-zinc-800 dark:text-zinc-200 border border-black/5 dark:border-white/10 mb-2">
-            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-            Katalog Produk & Inventaris
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-            Daftar Koleksi
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Pantau performa harga, stok SKU, dan kalkulasi margin laba mode.
-          </p>
-        </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-end gap-4">
+
 
         <Link 
           to="/products/new" 
@@ -172,67 +156,7 @@ export function ProductList() {
         </Link>
       </div>
 
-      {/* Bento Grid: Metric Summary Tiles */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Bento Stat 1 */}
-        <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-black/10 dark:border-white/15 shadow-sm relative overflow-hidden bento-glow-purple">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-muted-foreground">Total Koleksi</span>
-            <div className="h-8 w-8 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center border border-violet-500/20">
-              <Package className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-foreground tabular-nums">
-            {stats.totalCount}
-          </div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">Item terdaftar di katalog</span>
-        </div>
 
-        {/* Bento Stat 2 */}
-        <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-black/10 dark:border-white/15 shadow-sm relative overflow-hidden bento-glow-blue">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-muted-foreground">Kategori Aktif</span>
-            <div className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20">
-              <Layers className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-foreground tabular-nums">
-            {stats.distinctCategories}
-          </div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">Variasi kategori fashion</span>
-        </div>
-
-        {/* Bento Stat 3 */}
-        <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-black/10 dark:border-white/15 shadow-sm relative overflow-hidden bento-glow-emerald">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-muted-foreground">Rata-rata Margin</span>
-            <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
-              <TrendingUp className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-foreground tabular-nums flex items-baseline gap-1">
-            <span>{stats.avgMargin}%</span>
-            {stats.avgMargin >= 20 && (
-              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Target Sehat</span>
-            )}
-          </div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">Persentase laba rata-rata</span>
-        </div>
-
-        {/* Bento Stat 4 */}
-        <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-black/10 dark:border-white/15 shadow-sm relative overflow-hidden bento-glow-amber">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-muted-foreground">Nilai Pasaran Total</span>
-            <div className="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
-              <Coins className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="text-xl sm:text-2xl font-extrabold text-foreground tabular-nums truncate">
-            {formatIDR(stats.totalMarketValue)}
-          </div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">Estimasi omzet inventaris</span>
-        </div>
-      </div>
 
       {/* Filter & View Switcher Bar */}
       <div className="glass-panel rounded-2xl p-3 sm:p-4 border border-black/10 dark:border-white/15 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -346,7 +270,8 @@ export function ProductList() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filteredProducts.map((product) => {
             const imageUrl = getImageUrl(product.image_path);
-            const profit = (product.market_price || 0) - (product.supplier_price || 0);
+            const finalPrice = getFinalPrice(product);
+            const nominalMargin = (product.supplier_price || 0) * ((product.margin_percent || 0) / 100);
 
             return (
               <div 
@@ -396,14 +321,24 @@ export function ProductList() {
 
                   {/* Product Details Content */}
                   <div className="p-4 sm:p-5 space-y-3">
-                    <h3 className="font-bold text-base text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                    <h3 className="font-bold text-base text-foreground line-clamp-1 group-hover:text-primary transition-colors mb-1">
                       {product.name}
                     </h3>
+                    
+                    {/* Spesifikasi Grid */}
+                    <div className="text-[11px] text-muted-foreground grid grid-cols-2 gap-x-2 gap-y-1 mb-2">
+                      <div className="truncate" title={product.tipe}><span className="font-medium text-foreground">Bordir:</span> <span className="capitalize">{product.tipe || '-'}</span></div>
+                      <div className="truncate" title={product.motif}><span className="font-medium text-foreground">Motif:</span> {product.motif || '-'}</div>
+                      <div className="truncate" title={product.warna}><span className="font-medium text-foreground">Warna:</span> {product.warna || '-'}</div>
+                      <div className="truncate" title={product.bahan}><span className="font-medium text-foreground">Bahan:</span> {product.bahan || '-'}</div>
+                      <div className="truncate" title={product.ukuran}><span className="font-medium text-foreground">Ukuran:</span> {product.ukuran || '-'}</div>
+                      <div className="truncate" title={product.kelengkapan}><span className="font-medium text-foreground">Bonus:</span> {product.kelengkapan || '-'}</div>
+                    </div>
 
                     {/* Pricing Bento Row */}
                     <div className="bg-black/[0.03] dark:bg-white/[0.03] rounded-2xl p-3 border border-black/[0.02] dark:border-white/[0.04] space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Harga Supplier:</span>
+                        <span className="text-muted-foreground">Modal (Supplier):</span>
                         <span className="font-medium text-foreground tabular-nums">
                           {formatIDR(product.supplier_price)}
                         </span>
@@ -411,13 +346,13 @@ export function ProductList() {
                       <div className="flex items-center justify-between text-xs pt-1 border-t border-black/[0.04] dark:border-white/[0.06]">
                         <span className="text-muted-foreground">Harga Jual:</span>
                         <span className="font-bold text-sm text-foreground tabular-nums">
-                          {formatIDR(product.market_price)}
+                          {formatIDR(finalPrice)}
                         </span>
                       </div>
-                      {profit > 0 && (
+                      {nominalMargin > 0 && (
                         <div className="flex items-center justify-between text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                          <span>Potensi Laba:</span>
-                          <span className="tabular-nums">+{formatIDR(profit)}</span>
+                          <span>Laba Kotor:</span>
+                          <span className="tabular-nums">+{formatIDR(nominalMargin)}</span>
                         </div>
                       )}
                     </div>
@@ -426,8 +361,8 @@ export function ProductList() {
 
                 {/* Card Action Footer */}
                 <div className="px-4 pb-4 sm:px-5 sm:pb-5 pt-1 flex items-center justify-between border-t border-black/[0.04] dark:border-white/[0.06] mt-2">
-                  <div className="text-[11px] text-muted-foreground font-mono">
-                    {product.promotion_cost > 0 ? `Promo: ${formatIDR(product.promotion_cost)}` : 'Biaya Promo: Rp0'}
+                  <div className="text-[11px] text-muted-foreground font-mono truncate max-w-[150px]">
+                    {product.market_price ? `Info Psr: ${formatIDR(product.market_price)}` : 'Info Psr: -'}
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Link
@@ -488,15 +423,18 @@ export function ProductList() {
               <TableRow>
                 <TableHead className="w-[80px]">Foto</TableHead>
                 <TableHead>Produk & SKU</TableHead>
-                <TableHead className="text-right">Harga Supplier</TableHead>
-                <TableHead className="text-right">Harga Pasaran</TableHead>
-                <TableHead className="text-right">Margin</TableHead>
+                <TableHead className="text-right">Modal (Supplier)</TableHead>
+                <TableHead className="text-right">Harga Jual Final</TableHead>
+                <TableHead className="text-right">Margin Laba</TableHead>
                 <TableHead className="text-center w-[100px]">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredProducts.map((product) => {
                 const imageUrl = getImageUrl(product.image_path);
+                const finalPrice = getFinalPrice(product);
+                const nominalMargin = (product.supplier_price || 0) * ((product.margin_percent || 0) / 100);
+
                 return (
                   <TableRow key={product.id} className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
                     <TableCell>
@@ -531,21 +469,31 @@ export function ProductList() {
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       <div className="flex flex-col items-end">
-                        <span className="font-bold text-foreground">{formatIDR(product.market_price)}</span>
-                        {product.promotion_cost > 0 && (
-                          <span className="text-[11px] text-muted-foreground">
-                            + Promo {formatIDR(product.promotion_cost)}
-                          </span>
-                        )}
+                        <span className="font-bold text-foreground">{formatIDR(finalPrice)}</span>
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                          {product.market_price ? <span>Info Psr: {formatIDR(product.market_price)}</span> : null}
+                          {product.promotion_cost > 0 && (
+                            <span className="text-amber-600 dark:text-amber-400">
+                              + Promo {formatIDR(product.promotion_cost)}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      <Badge 
-                        variant={product.margin_percent >= 20 ? 'default' : 'secondary'} 
-                        className="ml-auto flex w-fit rounded-lg font-bold"
-                      >
-                        {product.margin_percent}%
-                      </Badge>
+                      <div className="flex flex-col items-end">
+                        <Badge 
+                          variant={product.margin_percent >= 20 ? 'default' : 'secondary'} 
+                          className="flex w-fit rounded-lg font-bold"
+                        >
+                          {product.margin_percent}%
+                        </Badge>
+                        {nominalMargin > 0 && (
+                          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-1">
+                            +{formatIDR(nominalMargin)}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1.5">

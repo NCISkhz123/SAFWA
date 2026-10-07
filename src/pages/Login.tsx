@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Sparkles, AlertCircle, Loader2, KeyRound, ShieldCheck, Tag, TrendingUp, Sun, Moon } from 'lucide-react'
+import { AlertCircle, Loader2, ShieldCheck, Sun, Moon } from 'lucide-react'
 
 export function Login() {
   const { session, loading } = useAuth()
@@ -38,10 +38,6 @@ export function Login() {
     setIsSubmitting(false)
   }
 
-  const handleQuickFill = () => {
-    setEmail('admin@safwa.com')
-    setPassword('password123')
-  }
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-slate-50/70 dark:bg-zinc-950 text-foreground overflow-hidden">
@@ -69,54 +65,9 @@ export function Login() {
         </Button>
       </div>
 
-      <div className="w-full max-w-5xl mx-auto grid lg:grid-cols-12 gap-6 lg:gap-8 items-center">
-        {/* Left Side: Bento Grid Showcase */}
-        <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Bento Tile 1: Hero Showcase */}
-          <div className="sm:col-span-2 glass-panel rounded-3xl p-6 sm:p-8 border border-black/10 dark:border-white/15 shadow-lg relative overflow-hidden bento-glow-purple">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-500/20">
-                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                Fashion Inventory Suite
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground leading-snug">
-              Kelola Koleksi Fashion dengan Presisi & Kecepatan Tinggi.
-            </h1>
-            <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-lg">
-              Sistem inventaris cerdas untuk katalog pakaian, kalkulasi otomatis margin laba, dan penomoran kode produk atomic anti-bentrok.
-            </p>
-          </div>
-
-          {/* Bento Tile 2: Auto Code Feature */}
-          <div className="glass-panel rounded-3xl p-5 sm:p-6 border border-black/10 dark:border-white/15 shadow-md flex flex-col justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 mb-3 border border-blue-500/20">
-              <Tag className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div>
-              <span className="font-semibold text-sm text-foreground block">Atomic SKU Codes</span>
-              <p className="text-xs text-muted-foreground mt-1">
-                Format otomatis berbasis kategori seperti <code className="text-[11px] font-mono bg-black/5 dark:bg-white/10 px-1 py-0.5 rounded font-bold">KM001</code> tanpa duplikasi.
-              </p>
-            </div>
-          </div>
-
-          {/* Bento Tile 3: Margin & Profit */}
-          <div className="glass-panel rounded-3xl p-5 sm:p-6 border border-black/10 dark:border-white/15 shadow-md flex flex-col justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mb-3 border border-emerald-500/20">
-              <TrendingUp className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div>
-              <span className="font-semibold text-sm text-foreground block">Pelacak Margin Laba</span>
-              <p className="text-xs text-muted-foreground mt-1">
-                Transparansi harga supplier, harga pasaran, dan biaya promosi untuk profit maksimal.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side: Frosted Glass Login Panel */}
-        <div className="lg:col-span-5">
+      <div className="w-full max-w-md mx-auto flex flex-col justify-center min-h-[calc(100vh-8rem)]">
+        {/* Frosted Glass Login Panel */}
+        <div className="w-full">
           <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-black/10 dark:border-white/15 shadow-2xl relative overflow-hidden backdrop-blur-2xl">
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
@@ -196,17 +147,7 @@ export function Login() {
                 )}
               </Button>
 
-              {/* Quick Demo Credentials Autofill */}
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={handleQuickFill}
-                  className="w-full py-2 px-3 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-black/[0.02] dark:bg-white/[0.02] text-xs text-muted-foreground hover:text-foreground hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
-                >
-                  <KeyRound className="h-3.5 w-3.5 text-zinc-500" aria-hidden="true" />
-                  <span>Isi otomatis akun demo (admin@safwa.com)</span>
-                </button>
-              </div>
+
             </form>
           </div>
         </div>
